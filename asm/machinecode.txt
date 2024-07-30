@@ -1,0 +1,199 @@
+ Address    Code        Basic                     Source
+
+0x00400000  0x3c011001  lui $1,0x00001001     11   la   $a0, filename  # load filename
+0x00400004  0x34240000  ori $4,$1,0x00000000       
+0x00400008  0x24050000  addiu $5,$0,0x0000000012   li   $a1, 0         # flag
+0x0040000c  0x24060000  addiu $6,$0,0x0000000013   li   $a2, 0         # mode
+0x00400010  0x2402000d  addiu $2,$0,0x0000000d14   li   $v0, 13        # open file syscall index
+0x00400014  0x0000000c  syscall               15   syscall
+0x00400018  0x00022021  addu $4,$0,$2         18   move $a0, $v0       # load file description to $a0
+0x0040001c  0x3c011001  lui $1,0x00001001     19   la   $a1, buffer    # buffer address
+0x00400020  0x34250010  ori $5,$1,0x00000010       
+0x00400024  0x24061004  addiu $6,$0,0x0000100420   li   $a2, 4100      # buffer size
+0x00400028  0x2402000e  addiu $2,$0,0x0000000e21   li   $v0, 14        # read file syscall index
+0x0040002c  0x0000000c  syscall               22   syscall
+0x00400030  0x24020010  addiu $2,$0,0x0000001025   li   $v0, 16        # close file syscall index
+0x00400034  0x0000000c  syscall               26   syscall
+0x00400038  0x3c011001  lui $1,0x00001001     29   la   $t0, buffer
+0x0040003c  0x34280010  ori $8,$1,0x00000010       
+0x00400040  0x8d100000  lw $16,0x00000000($8) 30   lw   $s0, 0($t0)    # set $s0 to n
+0x00400044  0x00102021  addu $4,$0,$16        31   move $a0, $s0       # set $a0 to n
+0x00400048  0x21050004  addi $5,$8,0x00000004 32   addi $a1, $t0, 4    # set $a1 to &graph
+0x0040004c  0x3c011001  lui $1,0x00001001     33   la $a2, dist            #a2 = dist
+0x00400050  0x34261014  ori $6,$1,0x00001014       
+0x00400054  0x3c011001  lui $1,0x00001001     38       la $a2, dist            #a2 = dist        #a2 = dist
+0x00400058  0x34261014  ori $6,$1,0x00001014       
+0x0040005c  0xacc00000  sw $0,0x00000000($6)  39       sw $zero, 0 ($a2)
+0x00400060  0x2409ffff  addiu $9,$0,0xffffffff41       li   $t1,-1             # t1 = -1
+0x00400064  0x20100001  addi $16,$0,0x0000000142       addi $s0, $zero, 1      # s0    ʼ  ѭ        iΪ1
+0x00400068  0x0204082a  slt $1,$16,$4         45       bge  $s0, $a0, init_loop2     #    i >= n      
+0x0040006c  0x10200005  beq $1,$0,0x00000005       
+0x00400070  0x00105880  sll $11,$16,0x0000000246       sll  $t3, $s0, 2                   #t3 = i*4
+0x00400074  0x00cb5020  add $10,$6,$11        47       add  $t2, $a2, $t3                 #t2 = t3 + t0,   dist[i]
+0x00400078  0xad490000  sw $9,0x00000000($10) 48       sw	 $t1, 0($t2)	        # 
+0x0040007c  0x22100001  addi $16,$16,0x000000049       addi $s0, $s0, 1
+0x00400080  0x0810001a  j 0x00400068          50       j init_loop
+0x00400084  0x20100001  addi $16,$0,0x0000000153       addi $s0, $zero, 1      #i = 1
+0x00400088  0x0204082a  slt $1,$16,$4         56       bge  $s0,$a0, relax_loop_end   
+0x0040008c  0x10200024  beq $1,$0,0x00000024       
+0x00400090  0x20110000  addi $17,$0,0x0000000057       addi $s1, $zero, 0      # s1: u = 0
+0x00400094  0x0224082a  slt $1,$17,$4         60       bge  $s1,$a0,next_i   #    u >= n      ת  next_i  ǩ  
+0x00400098  0x1020001f  beq $1,$0,0x0000001f       
+0x0040009c  0x00114940  sll $9,$17,0x00000005 61       sll  $t1, $s1, 5        # t1 = u<<5 
+0x004000a0  0x20120000  addi $18,$0,0x0000000062       addi $s2,$zero,0        # s2: vΪ0
+0x004000a4  0x0244082a  slt $1,$18,$4         65       bge  $s2,$a0,next_u     #    v >= n      ת  next_u  ǩ  
+0x004000a8  0x10200019  beq $1,$0,0x00000019       
+0x004000ac  0x01324020  add $8,$9,$18         66       add  $t0,$t1,$s2        # addr: t0 = (u<<5) + v
+0x004000b0  0x00084080  sll $8,$8,0x00000002  67       sll  $t0, $t0, 2
+0x004000b4  0x01054020  add $8,$8,$5          68       add  $t0, $t0, $a1
+0x004000b8  0x8d0a0000  lw $10,0x00000000($8) 69       lw   $t2, 0($t0)          #     graph[addr]  ֵ  $t2  
+0x004000bc  0x2001ffff  addi $1,$0,0xffffffff 70       beq  $t2,-1,next_v      #    graph[addr] == -1      ת  next_v  ǩ  
+0x004000c0  0x102a0011  beq $1,$10,0x00000011      
+0x004000c4  0x12320010  beq $17,$18,0x0000001071       beq  $s1,$s2,next_v     #    u == v      ת  next_v  ǩ  
+0x004000c8  0x00114080  sll $8,$17,0x00000002 73       sll  $t0, $s1, 2
+0x004000cc  0x01064020  add $8,$8,$6          74       add  $t0, $t0, $a2      # t0 = a2 + (s1<<2) 
+0x004000d0  0x8d0b0000  lw $11,0x00000000($8) 75       lw   $t3, 0($t0)        #     dist[u]  ֵ  $t3  
+0x004000d4  0x2001ffff  addi $1,$0,0xffffffff 76       beq  $t3,-1,next_v      #    dist[u] == -1      ת  next_v  ǩ  
+0x004000d8  0x102b000b  beq $1,$11,0x0000000b      
+0x004000dc  0x00124080  sll $8,$18,0x00000002 78       sll  $t0, $s2, 2
+0x004000e0  0x01064020  add $8,$8,$6          79       add  $t0, $t0, $a2      # t0 = a2 + (s2<<2) 
+0x004000e4  0x8d0c0000  lw $12,0x00000000($8) 80       lw   $t4, 0($t0)        #     dist[v]  ֵ  $t4  
+0x004000e8  0x016a6820  add $13,$11,$10       81       add  $t5,$t3,$t2        # t5 = dist[u]+graph[addr]
+0x004000ec  0x2001ffff  addi $1,$0,0xffffffff 83       beq  $t4,-1, update     #    dist[v] == -1,     
+0x004000f0  0x102c0003  beq $1,$12,0x00000003      
+0x004000f4  0x01ac082a  slt $1,$13,$12        85       bgt	 $t4, $t5, update	#     
+0x004000f8  0x14200001  bne $1,$0,0x00000001       
+0x004000fc  0x08100042  j 0x00400108          86       j    next_v
+0x00400100  0xad0d0000  sw $13,0x00000000($8) 89       sw   $t5, 0($t0)    #  洢dist[v]    ֵ  dist      
+0x00400104  0x08100042  j 0x00400108          90       j   next_v
+0x00400108  0x22520001  addi $18,$18,0x000000094       addi $s2,$s2,1          # ѭ        v  1
+0x0040010c  0x08100029  j 0x004000a4          95       j    inner_loop         #   ת  inner_loop  ǩ      ѭ  
+0x00400110  0x22310001  addi $17,$17,0x000000098       addi $s1,$s1,1          # ѭ        u  1
+0x00400114  0x08100025  j 0x00400094          99       j    init_u             #   ת  init u  ǩ      ѭ  
+0x00400118  0x22100001  addi $16,$16,0x0000000102      addi $s0,$s0,1          # ѭ        i  1
+0x0040011c  0x08100022  j 0x00400088          103      j    init_i             
+0x00400120  0x20080000  addi $8,$0,0x00000000 109  addi $t0, $zero, 0
+0x00400124  0x8cc90000  lw $9,0x00000000($6)  110  lw $t1, 0($a2)              
+0x00400128  0x01094020  add $8,$8,$9          111  add  $t0, $t0, $t1
+0x0040012c  0x8cc90004  lw $9,0x00000004($6)  112  lw $t1, 4($a2)
+0x00400130  0x01094020  add $8,$8,$9          113  add  $t0, $t0, $t1
+0x00400134  0x8cc90008  lw $9,0x00000008($6)  114  lw $t1, 8($a2)
+0x00400138  0x01094020  add $8,$8,$9          115  add  $t0, $t0, $t1
+0x0040013c  0x8cc9000c  lw $9,0x0000000c($6)  116  lw $t1, 12($a2)
+0x00400140  0x01094020  add $8,$8,$9          117  add  $t0, $t0, $t1
+0x00400144  0x8cc90010  lw $9,0x00000010($6)  118  lw $t1, 16($a2)
+0x00400148  0x01094020  add $8,$8,$9          119  add  $t0, $t0, $t1
+0x0040014c  0x8cc90014  lw $9,0x00000014($6)  120  lw $t1, 20($a2)
+0x00400150  0x01094020  add $8,$8,$9          121  add  $t0, $t0, $t1
+0x00400154  0x210a0000  addi $10,$8,0x00000000125  addi $t2, $t0, 0    
+0x00400158  0x200c0000  addi $12,$0,0x00000000126  addi $t4, $zero,0
+0x0040015c  0x200b000a  addi $11,$0,0x0000000a127  addi $t3, $zero, 10
+0x00400160  0x014b5022  sub $10,$10,$11       129    sub $t2, $t2, $t3    #  ñ       ȥ    
+0x00400164  0x218c0001  addi $12,$12,0x0000000130    addi $t4, $t4, 1      #ͳ Ƴ      ?
+0x00400168  0x1d40fffd  bgtz $10,0xfffffffd   131    bgtz $t2, div_loop1  #          ڵ    0      ѭ  
+0x0040016c  0x1140fffc  beq $10,$0,0xfffffffc 132    beq  $t2, $zero, div_loop1
+0x00400170  0x014b8020  add $16,$10,$11       133  add $s0, $t2, $t3    #             С   0      ϳ   ?,s0   Ǹ λ
+0x00400174  0x218cffff  addi $12,$12,0xfffffff134  addi $t4,$t4, -1        #        ?
+0x00400178  0x218a0000  addi $10,$12,0x0000000138  addi $t2, $t4, 0
+0x0040017c  0x200c0000  addi $12,$0,0x00000000139  addi $t4, $zero,0       #    㣬ͳ Ƴ      ?
+0x00400180  0x200b0064  addi $11,$0,0x00000064140  addi $t3, $zero, 100
+0x00400184  0x014b5022  sub $10,$10,$11       142    sub $t2, $t2, $t3    #  ñ       ȥ    
+0x00400188  0x218c0001  addi $12,$12,0x0000000143    addi $t4, $t4, 1      #ͳ Ƴ      ?
+0x0040018c  0x1d40fffd  bgtz $10,0xfffffffd   144    bgtz $t2, div_loop2  #          ڵ    0      ѭ  
+0x00400190  0x1140fffc  beq $10,$0,0xfffffffc 145    beq  $t2, $zero, div_loop2
+0x00400194  0x014b8820  add $17,$10,$11       146  add $s1, $t2, $t3    #       С   0      ϳ   ?,s1    ʮλ
+0x00400198  0x218cffff  addi $12,$12,0xfffffff148  addi $t4,$t4, -1        #        ?
+0x0040019c  0x218a0000  addi $10,$12,0x0000000150  addi $t2, $t4, 0
+0x004001a0  0x200c0000  addi $12,$0,0x00000000151  addi $t4, $zero,0       #    㣬ͳ Ƴ      ?
+0x004001a4  0x200b03e8  addi $11,$0,0x000003e8152  addi $t3, $zero, 1000
+0x004001a8  0x014b5022  sub $10,$10,$11       154    sub $t2, $t2, $t3    #  ñ       ȥ    
+0x004001ac  0x218c0001  addi $12,$12,0x0000000155    addi $t4, $t4, 1      #ͳ Ƴ      ?
+0x004001b0  0x1d40fffd  bgtz $10,0xfffffffd   156    bgtz $t2,  div_loop3  #          ڵ    0      ѭ  
+0x004001b4  0x1140fffc  beq $10,$0,0xfffffffc 157    beq  $t2, $zero, div_loop3
+0x004001b8  0x014b9020  add $18,$10,$11       158  add $s2, $t2, $t3    
+0x004001bc  0x218cffff  addi $12,$12,0xfffffff160  addi $t4,$t4, -1        
+0x004001c0  0x218a0000  addi $10,$12,0x0000000162  addi $t2, $t4, 0
+0x004001c4  0x200c0000  addi $12,$0,0x00000000163  addi $t4, $zero,0       
+0x004001c8  0x200b2710  addi $11,$0,0x00002710164  addi $t3, $zero, 10000
+0x004001cc  0x014b5022  sub $10,$10,$11       166    sub $t2, $t2, $t3    
+0x004001d0  0x218c0001  addi $12,$12,0x0000000167    addi $t4, $t4, 1      
+0x004001d4  0x1d40fffd  bgtz $10,0xfffffffd   168    bgtz $t2,  div_loop4  
+0x004001d8  0x1140fffc  beq $10,$0,0xfffffffc 169    beq  $t2, $zero, div_loop4
+0x004001dc  0x014b9820  add $19,$10,$11       170  add $s3, $t2, $t3    
+0x004001e0  0x218cffff  addi $12,$12,0xfffffff171  addi $t4,$t4, -1        
+0x004001e4  0x02002020  add $4,$16,$0         175  add $a0, $s0, $zero
+0x004001e8  0x0c100086  jal 0x00400218        176  jal tr
+0x004001ec  0x20540800  addi $20,$2,0x00000800177  addi $s4, $v0, 0x800
+0x004001f0  0x02202020  add $4,$17,$0         181  add $a0, $s1, $zero
+0x004001f4  0x0c100086  jal 0x00400218        182  jal tr
+0x004001f8  0x20550400  addi $21,$2,0x00000400183  addi $s5, $v0, 0x400
+0x004001fc  0x02402020  add $4,$18,$0         187  add $a0, $s2, $zero
+0x00400200  0x0c100086  jal 0x00400218        188  jal tr
+0x00400204  0x20560200  addi $22,$2,0x00000200189  addi $s6, $v0, 0x200
+0x00400208  0x02602020  add $4,$19,$0         193  add $a0, $s3, $zero
+0x0040020c  0x0c100086  jal 0x00400218        194  jal tr
+0x00400210  0x20570100  addi $23,$2,0x00000100195  addi $s7, $v0, 0x100
+0x00400214  0x081000af  j 0x004002bc          197  j print                 #   ʼ  ӡ
+0x00400218  0x20080000  addi $8,$0,0x00000000 201      addi $t0, $zero, 0
+0x0040021c  0x10880012  beq $4,$8,0x00000012  202      beq $a0, $t0, case_0
+0x00400220  0x20080001  addi $8,$0,0x00000001 203      addi $t0, $zero, 1
+0x00400224  0x10880012  beq $4,$8,0x00000012  204      beq $a0, $t0, case_1
+0x00400228  0x20080002  addi $8,$0,0x00000002 205      addi $t0, $zero, 2
+0x0040022c  0x10880012  beq $4,$8,0x00000012  206      beq $a0, $t0, case_2
+0x00400230  0x20080003  addi $8,$0,0x00000003 207      addi $t0, $zero, 3
+0x00400234  0x10880012  beq $4,$8,0x00000012  208      beq $a0, $t0, case_3
+0x00400238  0x20080004  addi $8,$0,0x00000004 209      addi $t0, $zero, 4
+0x0040023c  0x10880012  beq $4,$8,0x00000012  210      beq $a0, $t0, case_4
+0x00400240  0x20080005  addi $8,$0,0x00000005 211      addi $t0, $zero, 5
+0x00400244  0x10880012  beq $4,$8,0x00000012  212      beq $a0, $t0, case_5
+0x00400248  0x20080006  addi $8,$0,0x00000006 213      addi $t0, $zero, 6
+0x0040024c  0x10880012  beq $4,$8,0x00000012  214      beq $a0, $t0, case_6
+0x00400250  0x20080007  addi $8,$0,0x00000007 215      addi $t0, $zero, 7
+0x00400254  0x10880012  beq $4,$8,0x00000012  216      beq $a0, $t0, case_7
+0x00400258  0x20080008  addi $8,$0,0x00000008 217      addi $t0, $zero, 8
+0x0040025c  0x10880012  beq $4,$8,0x00000012  218      beq $a0, $t0, case_8
+0x00400260  0x20080009  addi $8,$0,0x00000009 219      addi $t0, $zero, 9
+0x00400264  0x10880012  beq $4,$8,0x00000012  220      beq $a0, $t0, case_9
+0x00400268  0x2002003f  addi $2,$0,0x0000003f 223      addi $v0, $zero, 0x3f
+0x0040026c  0x081000ae  j 0x004002b8          224      j end_tr
+0x00400270  0x20020006  addi $2,$0,0x00000006 226      addi $v0, $zero, 0x06
+0x00400274  0x081000ae  j 0x004002b8          227      j end_tr
+0x00400278  0x2002005b  addi $2,$0,0x0000005b 229      addi $v0, $zero, 0x5b
+0x0040027c  0x081000ae  j 0x004002b8          230      j end_tr
+0x00400280  0x2002004f  addi $2,$0,0x0000004f 232      addi $v0, $zero, 0x4f
+0x00400284  0x081000ae  j 0x004002b8          233      j end_tr
+0x00400288  0x20020066  addi $2,$0,0x00000066 235      addi $v0, $zero, 0x66
+0x0040028c  0x081000ae  j 0x004002b8          236      j end_tr
+0x00400290  0x2002006d  addi $2,$0,0x0000006d 238      addi $v0, $zero, 0x6d
+0x00400294  0x081000ae  j 0x004002b8          239      j end_tr
+0x00400298  0x2002007d  addi $2,$0,0x0000007d 241      addi $v0, $zero, 0x7d
+0x0040029c  0x081000ae  j 0x004002b8          242      j end_tr
+0x004002a0  0x20020007  addi $2,$0,0x00000007 244      addi $v0, $zero, 0x07
+0x004002a4  0x081000ae  j 0x004002b8          245      j end_tr
+0x004002a8  0x2002007f  addi $2,$0,0x0000007f 247      addi $v0, $zero, 0x7f
+0x004002ac  0x081000ae  j 0x004002b8          248      j end_tr
+0x004002b0  0x2002006f  addi $2,$0,0x0000006f 250      addi $v0, $zero, 0x6f
+0x004002b4  0x081000ae  j 0x004002b8          251      j end_tr
+0x004002b8  0x03e00008  jr $31                254      jr $ra
+0x004002bc  0x20080001  addi $8,$0,0x00000001 259  addi $t0, $zero, 1              # t0: count time
+0x004002c0  0x20180064  addi $24,$0,0x00000064260  addi $t8, $zero, 100
+0x004002c4  0x11180012  beq $8,$24,0x00000012 262      beq $t0, $t8, final_end
+0x004002c8  0x21080001  addi $8,$8,0x00000001 263      addi $t0, $t0, 1
+0x004002cc  0x00c0c820  add $25,$6,$0         264      add $t9, $a2, $zero                  # the address for BCD control
+0x004002d0  0xaf340000  sw $20,0x00000000($25)265      sw $s4 , 0($t9)
+0x004002d4  0x0c1000bd  jal 0x004002f4        266      jal wait_func
+0x004002d8  0xaf350000  sw $21,0x00000000($25)267      sw $s5 , 0($t9)
+0x004002dc  0x0c1000bd  jal 0x004002f4        268      jal wait_func
+0x004002e0  0xaf360000  sw $22,0x00000000($25)269      sw $s6 , 0($t9)
+0x004002e4  0x0c1000bd  jal 0x004002f4        270      jal wait_func
+0x004002e8  0xaf370000  sw $23,0x00000000($25)271      sw $s7 , 0($t9)
+0x004002ec  0x0c1000bd  jal 0x004002f4        272      jal wait_func
+0x004002f0  0x081000b1  j 0x004002c4          273      j print_loop
+0x004002f4  0x20090001  addi $9,$0,0x00000001 276      addi $t1, $zero, 1
+0x004002f8  0x200a0064  addi $10,$0,0x00000064277      addi $t2, $zero, 100
+0x004002fc  0x112a0003  beq $9,$10,0x00000003 279          beq $t1, $t2, end_wait_loop
+0x00400300  0x21290001  addi $9,$9,0x00000001 280          addi $t1, $t1, 1
+0x00400304  0x00000000  nop                   281          nop
+0x00400308  0x081000bf  j 0x004002fc          282          j wait_loop
+0x0040030c  0x03e00008  jr $31                284      jr $ra
+0x00400310  0x00000000  nop                   288      nop
